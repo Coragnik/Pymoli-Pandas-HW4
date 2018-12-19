@@ -1,0 +1,245 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[47]:
+
+
+#Dependencies
+import pandas as pd
+import numpy as np
+
+
+# In[48]:
+
+
+# Raw data file
+file_to_load = "Resources/purchase_data.csv"
+
+
+# In[49]:
+
+
+# Read purchasing file and store into pandas data frame
+purchase_data = pd.read_csv(file_to_load)
+
+
+# In[50]:
+
+
+#player count-display total numbers of players using SN
+total_players = len(purchase_data["SN"].value_counts())
+tota_player_count = pd.DataFrame({"Total Players":[total_players]})
+tota_player_count
+
+
+# In[51]:
+
+
+# Purchasing Analysis (Total)
+#Run basic calculations to obtain number of unique items, average price, etc.
+#Create a summary data frame to hold the results
+Number_of_unique_items = len((purchase_data["Item ID"]).unique())
+Average_Purchase_price = (purchase_data["Price"]).mean()
+Total_number_of_purchases = (purchase_data["Purchase ID"]).count()
+Total_revenue = (purchase_data["Price"]).sum()
+
+#Create a summary data frame to hold the results
+summary_df = pd.DataFrame({"Number of Unique Items":[Number_of_unique_items],
+                           "Average Price":[Average_Purchase_price], 
+                           "Number of Purchases": [Total_number_of_purchases], 
+                           "Total Revenue": [Total_revenue]})
+#Display the summary data frame
+summary_df.style.format({'Average Price':"${:,.2f}",
+                         'Total Revenue': '${:,.2f}'})
+
+
+# In[81]:
+
+
+# Gender Demographics
+#first let's isolate the gender factor
+Gender_statistics = purchase_data.groupby("Gender")
+Total_count = Gender_statistics.nunique()["SN"]
+
+# Percentage of players
+percentage_of_players = Total_count / total_players * 100
+
+# demoraphics
+gender_demographics = pd.DataFrame({"Total Count": Total_count,
+                                    "Percentage of Players": percentage_of_players})
+
+# Make sure there is nothing on the index part
+gender_demographics.index.name = None
+
+# two decimals
+gender_demographics.sort_values(["Total Count"], ascending = False).style.format({"Percentage of Players":"{:.2f}"})
+
+
+# In[53]:
+
+
+#Purchasing Analysis (All broken down by gender)
+# Count the total purchases by gender 
+Purchase_count = Gender_statistics["Purchase ID"].count()
+
+# Average purchase prices
+avg_purchase_price = Gender_statistics["Price"].mean()
+
+# Average purchase total 
+avg_purchase_total = Gender_statistics["Price"].sum()
+
+# Average purchase total per person
+avg_purchase_per_person = avg_purchase_total/total_count_gender
+
+# Create data frame with all the datas
+Demographics = pd.DataFrame({"Purchase Count": Purchase_count, 
+                                    "Average Purchase Price": avg_purchase_price,
+                                    "Average Purchase Value":avg_purchase_total,
+                                    "Avg Purchase Total per Person": avg_purchase_per_person})
+
+# Provide index in top left as "Gender"
+Demographics.index.name = "Gender"
+
+# Format with currency style
+Demographics.style.format({"Average Purchase Value":"${:,.2f}",
+                                  "Average Purchase Price":"${:,.2f}",
+                                  "Avg Purchase Total per Person":"${:,.2f}"})
+
+
+# In[67]:
+
+
+age_bins = [0, 9.90, 14.90, 19.90, 24.90, 29.90, 34.90, 39.90, 99999]
+group_names = ["<10", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40+"]
+
+purchase_data["Age Group"] = pd.cut(purchase_data["Age"],age_bins, labels=group_names)
+purchase_data
+
+# Regroup all the datas according to the defined bins 
+age_grouped = purchase_data.groupby("Age Group")
+
+# Count total players
+total_count_age = age_grouped["SN"].nunique()
+
+# percentages by age 
+percentage_by_age = (total_count_age/total_players) * 100
+
+#gatjer the values into the same table
+age_demographics = pd.DataFrame({ "Total Count": total_count_age,
+                                  "Percentage of Players": percentage_by_age,})
+
+# Make sure there is 2 decimals 
+age_demographics.style.format({"Percentage of Players":"{:,.2f}"})
+
+#index
+age_demographics.index.name = None
+
+
+# In[69]:
+
+
+#Purchasing Analysis (Age)
+#Purchases by age group
+purchase_count_age = age_grouped["Purchase ID"].count()
+
+#get the average purchase price based on the age group 
+avg_purchase_price_age = age_grouped["Price"].mean()
+
+#get the total (sum) 
+total_purchase_value = age_grouped["Price"].sum()
+
+#Avg Total Purchase per Person
+avg_purchase_per_person_age = total_purchase_value/total_count_age
+
+#data frame
+age_demographics = pd.DataFrame({"Purchase Count": purchase_count_age,
+                                 "Average Purchase Price": avg_purchase_price_age,
+                                 "Total Purchase Value":total_purchase_value,
+                                 "Average Purchase Total per Person": avg_purchase_per_person_age})
+
+# Format with currency style
+age_demographics.style.format({"Average Purchase Price":"${:,.2f}",
+                               "Total Purchase Value":"${:,.2f}",
+                               "Average Purchase Total per Person":"${:,.2f}"})
+
+# index=none
+age_demographics.index.name = None
+
+
+# In[71]:
+
+
+#Top Spenders 
+#Run basic calculations to obtain the results in the table below
+#Create a summary data frame to hold the results
+#Sort the total purchase value column in descending order
+#Optional: give the displayed data cleaner formatting
+#Display a preview of the summary data frame
+
+spender_statistics = purchase_data.groupby("SN")
+
+# gather total purchases
+purchase_count_spender =spender_statistics["Purchase ID"].count()
+
+# average purchase by spender
+avg_purchase_price_spender = spender_statistics["Price"].mean()
+
+# Calculate purchase total 
+purchase_total_spender = spender_statistics["Price"].sum()
+
+# data frame
+top_spenders = pd.DataFrame({"Purchase Count": purchase_count_spender,
+                             "Average Purchase Price": avg_purchase_price_spender,
+                             "Total Purchase Value":purchase_total_spender})
+
+#Formatting the data frame 
+format_spenders = top_spenders.sort_values(["Total Purchase Value"], ascending=False).head()
+
+# Format with currency style
+format_spenders.style.format({"Average Purchase Total":"${:,.2f}",
+                              "Average Purchase Price":"${:,.2f}", 
+                              "Total Purchase Value":"${:,.2f}"})
+
+
+# In[76]:
+
+
+#Most Popular Items
+#Retrieve the Item ID, Item Name, and Item Price columns
+Items = purchase_data[["Item ID", "Item Name", "Price"]]
+
+#Group by Item ID and Item Name. Perform calculations to obtain purchase count, item price, and total purchase value
+item_statistics = items.groupby(["Item ID","Item Name"])
+purchase_count_item = item_statistics["Price"].count()
+purchase_value = (item_statistics["Price"].sum()) 
+item_price = purchase_value/purchase_count_item
+
+#Optional: give the displayed data cleaner formatting
+most_popular_items = pd.DataFrame({"Purchase Count": purchase_count_item, 
+                                   "Item Price": item_price,
+                                   "Total Purchase Value":purchase_value})
+
+#Sort the purchase count column in descending order
+Formatting = most_popular_items.sort_values(["Purchase Count"], ascending=False).head()
+Formatting.style.format({"Item Price":"${:,.2f}",
+                                "Total Purchase Value":"${:,.2f}"})
+
+
+# In[77]:
+
+
+#Most Profitable Items-Sort the above table by total purchase value in descending order
+
+Formatting = most_popular_items.sort_values(["Total Purchase Value"],
+                                                   ascending=False).head()
+#Display a preview of the data frame
+
+Formatting.style.format({"Item Price":"${:,.2f}",
+                                "Total Purchase Value":"${:,.2f}"})
+
+
+# In[ ]:
+
+
+
+
